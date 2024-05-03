@@ -1,0 +1,11 @@
+environment or library requirements needed to run this application on a device
+(although a backup/clone environment is available to be imported for easier usage)
+
+1. Python 3.9+
+2. Scikit-Learn
+3. Streamlit
+4. Seaborn
+5. Matplotlib
+6. XGBoost
+
+run through the code : python -m streamlit run app.py
