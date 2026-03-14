@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Money Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0f1117;
+      color: #e6e6e6;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      background: #1a1d24;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    h3 {
+      text-align: center;
+      font-weight: 400;
+      color: #9aa4b2;
+      margin-bottom: 20px;
+    }
+
+    hr {
+      border: none;
+      height: 1px;
+      background: #2a2f3a;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #222633;
+      padding: 15px 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+    }
+
+    .card strong {
+      font-weight: 500;
+      color: #cfd6e4;
+    }
+
+    .value {
+      font-weight: 600;
+      color: #4ade80;
+    }
+
+    .warning {
+      color: #f87171;
+    }
+
+    .input-section {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid #2a2f3a;
+      background: #11141a;
+      color: #ffffff;
+      font-size: 15px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #4ade80;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #4ade80;
+      color: #0f1117;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #22c55e;
+    }
+
+    #extraResult {
+      margin-top: 15px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Money Tracker</h1>
+<h3 id="today"></h3>
+
+<hr>
+
+<div class="card">
+  <strong>Minimum Balance</strong>
+  <span class="value">₹5000</span>
+</div>
+
+<div class="card">
+  <strong>Total Savings</strong>
+  <span class="value">₹<span id="savings"></span></span>
+</div>
+
+<div class="card">
+  <strong>Bank account should have</strong>
+  <span class="value">₹<span id="expected"></span></span>
+</div>
+
+<div class="card">
+  <strong>Neccessary stuff required amount</strong>
+  <span class="value">₹<span id="spendable"></span></span>
+</div>
+
+<hr>
+
+<div class="input-section">
+  <h3>Enter Bank Balance</h3>
+  <input type="number" id="actualInput" placeholder="Enter current balance">
+  <button onclick="calculateExtra()">Check Extra money</button>
+  <p id="extraResult"></p>
+</div>
+
+</div>
+
+<script>
+
+// ===== CONSTANTS =====
+const salary = 21000;
+const savingsPerMonth = 10000;
+const monthlySpendable = 11000;
+const dailyExpense = 160;
+const minBalance = 5000;
+const extraSavings = 2000;
+const adjustment = 80; // fixed ₹80 purchase
+
+// Bills per month
+function getBills(day){
+  let total = 0;
+  if(day === 1) total += 4050;
+  if(day === 2) total += 710;
+  if(day === 10) total += 1000;
+  if(day === 12) total += 360;
+  return total;
+}
+
+// ===== INITIALIZATION =====
+let startDate = new Date("2026-01-31");
+let today = new Date();
+document.getElementById("today").innerText = "Today: " + today.toDateString();
+
+let totalSavings = 0;
+let lockedMoney = minBalance;
+let remainingSpendable = 0;
+
+// ===== SIMULATION LOOP =====
+let currentDate = new Date(startDate);
+currentDate.setDate(currentDate.getDate() + 1);
+
+while(currentDate <= today){
+
+  let day = currentDate.getDate();
+
+  if(day === 5 && currentDate >= new Date("2026-03-05")){
+    totalSavings += extraSavings;
+    lockedMoney = minBalance + totalSavings;
+  }
+
+  if(day === 1 && currentDate >= new Date("2026-02-01")){
+    totalSavings += savingsPerMonth;
+    lockedMoney = minBalance + totalSavings;
+    remainingSpendable = monthlySpendable;
+
+    remainingSpendable -= getBills(day);
+    remainingSpendable -= dailyExpense;
+  } else {
+    remainingSpendable -= getBills(day);
+    remainingSpendable -= dailyExpense;
+  }
+
+  currentDate.setDate(currentDate.getDate() + 1);
+}
+
+// APPLY ₹80 ADJUSTMENT
+remainingSpendable -= adjustment;
+
+let bankBalance = lockedMoney + remainingSpendable;
+
+document.getElementById("savings").innerText = totalSavings;
+document.getElementById("expected").innerText = Math.floor(bankBalance);
+document.getElementById("spendable").innerText = Math.floor(remainingSpendable);
+
+function calculateExtra(){
+  let actual = parseFloat(document.getElementById("actualInput").value);
+
+  if(isNaN(actual)){
+    document.getElementById("extraResult").innerText = "Please enter valid amount.";
+    return;
+  }
+
+  let safe = actual - bankBalance;
+
+  if(safe > 0){
+    document.getElementById("extraResult").innerText = "You can safely spend ₹" + Math.floor(safe);
+  } else {
+    document.getElementById("extraResult").innerText = "You are below your expected balance by ₹" + Math.abs(Math.floor(safe));
+  }
+}
+
+</script>
+
+</body>
+</html>
