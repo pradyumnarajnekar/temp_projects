@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Finance Dashboard</title>
+
+<style>
+
+:root{
+--bg:#0f172a;
+--card:#1e293b;
+--text:#e2e8f0;
+--muted:#94a3b8;
+--border:#334155;
+--green:#22c55e;
+--yellow:#facc15;
+--blue:#3b82f6;
+}
+
+*{box-sizing:border-box;}
+
+body{
+margin:0;
+background:var(--bg);
+color:var(--text);
+font-family:system-ui,-apple-system,Segoe UI;
+padding:20px;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+}
+
+h1{
+margin-bottom:5px;
+}
+
+.date{
+color:var(--muted);
+margin-bottom:20px;
+}
+
+.card{
+background:var(--card);
+border-radius:12px;
+padding:20px;
+margin-bottom:20px;
+border:1px solid var(--border);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+}
+
+.stat{
+background:#020617;
+padding:16px;
+border-radius:10px;
+}
+
+.stat h3{
+font-size:13px;
+color:var(--muted);
+margin:0;
+}
+
+.stat p{
+font-size:24px;
+margin:6px 0 0;
+font-weight:600;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th{
+text-align:left;
+color:var(--muted);
+font-size:13px;
+padding:10px 0;
+border-bottom:1px solid var(--border);
+}
+
+td{
+padding:12px 0;
+border-bottom:1px solid var(--border);
+}
+
+.status{
+font-size:18px;
+width:30px;
+}
+
+.done{color:var(--green);}
+.pending{color:var(--muted);}
+.upcoming{color:var(--yellow);}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid var(--border);
+background:#020617;
+color:white;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:8px;
+background:var(--blue);
+color:white;
+font-weight:600;
+font-size:15px;
+cursor:pointer;
+}
+
+.section-title{
+font-size:18px;
+margin-bottom:10px;
+}
+
+.result{
+margin-top:10px;
+font-weight:600;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Money Tracker</h1>
+<div class="date" id="date"></div>
+
+<!-- SUMMARY -->
+
+<div class="card">
+
+<div class="grid">
+
+<div class="stat">
+<h3>Savings</h3>
+<p id="savings"></p>
+</div>
+
+<div class="stat">
+<h3>Necessary Spendable</h3>
+<p id="spendable"></p>
+</div>
+
+<div class="stat">
+<h3>Bank Balance should have</h3>
+<p id="expected"></p>
+</div>
+
+</div>
+
+</div>
+
+<!-- BALANCE CHECK -->
+
+<div class="card">
+
+<div class="section-title">Bank Balance Check</div>
+
+<input type="number" id="actual" placeholder="Enter current bank balance">
+
+<button onclick="compare()">Compare Balance</button>
+
+<div class="result" id="result"></div>
+
+</div>
+
+<!-- MONTHLY CHECKPOINTS -->
+
+<div class="card">
+
+<div class="section-title">Monthly Expenses</div>
+
+<table id="expenseTable">
+
+<tr>
+<th></th>
+<th>Date</th>
+<th>Expense</th>
+<th>Amount</th>
+</tr>
+
+</table>
+
+</div>
+
+<!-- DAILY EXPENSES -->
+
+<div class="card">
+
+<div class="section-title">Daily Expenses</div>
+
+<table id="dailyTable">
+
+<tr>
+<th></th>
+<th>Time</th>
+<th>Expense</th>
+<th>Amount</th>
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const now=new Date();
+
+const day=now.getDate();
+const hour=now.getHours();
+const minute=now.getMinutes();
+
+document.getElementById("date").innerText=
+"Today: "+now.toLocaleString();
+
+const checkpoints=[
+
+{date:1,name:"Househelp",amount:3000},
+
+{date:1,name:"Hair Oil",amount:200},
+{date:1,name:"Body Lotion",amount:200},
+{date:1,name:"Sunscreen",amount:300},
+{date:1,name:"Deo",amount:100},
+{date:1,name:"Toothpaste",amount:100},
+{date:1,name:"Soap",amount:50},
+{date:1,name:"Shampoo",amount:200},
+
+{date:1,name:"WiFi Bill",amount:710},
+
+{date:10,name:"SIP Investment",amount:1000},
+
+{date:12,name:"Mobile Bill",amount:360}
+
+];
+
+let spent=0;
+
+const table=document.getElementById("expenseTable");
+
+checkpoints.forEach(e=>{
+
+let done=day>=e.date;
+
+let icon=done?"✔":"○";
+
+let className=done?"done":"pending";
+
+let row=document.createElement("tr");
+
+row.innerHTML=
+`<td class="status ${className}">${icon}</td>
+<td>${e.date}</td>
+<td>${e.name}</td>
+<td>₹${e.amount}</td>`;
+
+table.appendChild(row);
+
+if(done) spent+=e.amount;
+
+});
+
+
+// DAILY PETROL / LUNCH
+
+let petrolDone=false;
+let lunchDone=false;
+
+if(hour>7 || (hour==7 && minute>=30)) petrolDone=true;
+
+if(hour>12 || (hour==12 && minute>=15)) lunchDone=true;
+
+let pastDays=day-1;
+
+spent+=pastDays*160;
+
+if(petrolDone) spent+=100;
+if(lunchDone) spent+=60;
+
+const dailyTable=document.getElementById("dailyTable");
+
+function addDaily(icon,className,time,name,amount){
+
+let row=document.createElement("tr");
+
+row.innerHTML=
+`<td class="status ${className}">${icon}</td>
+<td>${time}</td>
+<td>${name}</td>
+<td>₹${amount}</td>`;
+
+dailyTable.appendChild(row);
+
+}
+
+petrolDone
+?addDaily("✔","done","07:30","Petrol",100)
+:addDaily("⏱","upcoming","07:30","Petrol",100);
+
+lunchDone
+?addDaily("✔","done","12:15","Lunch",60)
+:addDaily("⏱","upcoming","12:15","Lunch",60);
+
+
+// SAVINGS ENGINE (MONTHLY)
+
+const startYear=2026;
+const startMonth=2; // March
+
+const year=now.getFullYear();
+const month=now.getMonth();
+
+let monthsPassed=
+(year-startYear)*12 + (month-startMonth);
+
+if(monthsPassed<0) monthsPassed=0;
+
+let savings=10000 + (monthsPassed+1)*12000;
+
+
+// SPENDABLE
+
+let remaining=11000-spent;
+
+
+// MINIMUM BALANCE
+
+let minimum=5000;
+
+
+// EXPECTED BALANCE
+
+let expected=minimum+savings+remaining;
+
+
+document.getElementById("savings").innerText="₹"+savings;
+document.getElementById("spendable").innerText="₹"+remaining;
+document.getElementById("expected").innerText="₹"+expected;
+
+window.expected=expected;
+
+
+// BALANCE COMPARISON
+
+function compare(){
+
+let actual=Number(document.getElementById("actual").value);
+
+let diff=actual-window.expected;
+
+let msg="";
+
+if(diff>0)
+msg="You have extra ₹"+diff+" available.";
+
+else if(diff<0)
+msg="You overspent ₹"+Math.abs(diff)+".";
+
+else
+msg="Perfect balance.";
+
+document.getElementById("result").innerText=msg;
+
+}
+
+</script>
+
+</body>
+</html>
